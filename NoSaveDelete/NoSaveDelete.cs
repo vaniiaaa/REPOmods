@@ -4,7 +4,7 @@ using HarmonyLib;
 
 namespace NoSaveDelete
 {
-    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "1.0.0")]
+    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "1.0.8")]
     public class NoSaveDeletePlugin : BaseUnityPlugin
     {
         private static ManualLogSource logger;
@@ -14,9 +14,8 @@ namespace NoSaveDelete
             logger = Logger;
             var harmony = new Harmony("com.vaniiaaa.nosavedelete");
             harmony.PatchAll();
-            logger.LogInfo("NoSaveDelete is loaded");
+            logger.LogInfo("NoSaveDelete v1.0.8 loaded");
         }
-
 
         [HarmonyPatch(typeof(DataDirector), "SaveDeleteCheck")]
         public class DataDirectorSaveDeleteCheckPatch
@@ -45,21 +44,6 @@ namespace NoSaveDelete
             {
                 logger.LogInfo("ResetProgress blocked - progress preserved");
                 return false;
-            }
-        }
-
-        [HarmonyPatch(typeof(RunManager), "ChangeLevel")]
-        public class ChangeLevelPatch
-        {
-            static void Prefix(ref bool completedLevel, ref bool levelFailed)
-            {
-                
-                if (levelFailed && RunManager.instance.levelCurrent == RunManager.instance.levelArena)
-                {
-                    completedLevel = false;
-                    levelFailed = false; 
-                    logger.LogInfo("ChangeLevel after Arena - levelFailed flag reset to prevent progress loss");
-                }
             }
         }
     }
