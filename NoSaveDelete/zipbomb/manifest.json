@@ -1,0 +1,9 @@
+{
+    "name": "NoSaveDelete",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/vaniiaaa/REPOmods",
+    "description": "Removes the save deletion, BUT it still requires recreating the lobby after the arena fight, and everyone who died will respawn with 1 HP.",
+    "dependencies": [
+        "BepInEx-BepInExPack-5.4.2304"
+    ]
+}

@@ -1,0 +1,11 @@
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.csproj.AssemblyReference.cache
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.GeneratedMSBuildEditorConfig.editorconfig
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.AssemblyInfoInputs.cache
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.AssemblyInfo.cs
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.csproj.CoreCompileInputs.cache
+D:\ModsDev\Mods\NoSaveDelete\bin\Debug\netstandard2.1\NoSaveDelete.deps.json
+D:\ModsDev\Mods\NoSaveDelete\bin\Debug\netstandard2.1\NoSaveDelete.dll
+D:\ModsDev\Mods\NoSaveDelete\bin\Debug\netstandard2.1\NoSaveDelete.pdb
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.dll
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.pdb
+D:\ModsDev\Mods\NoSaveDelete\obj\Debug\netstandard2.1\NoSaveDelete.sourcelink.json
