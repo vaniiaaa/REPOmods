@@ -4,7 +4,7 @@ using HarmonyLib;
 
 namespace NoSaveDelete
 {
-    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "1.0.8")]
+    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "2.1.0")]
     public class NoSaveDeletePlugin : BaseUnityPlugin
     {
         private static ManualLogSource logger;
@@ -14,7 +14,7 @@ namespace NoSaveDelete
             logger = Logger;
             var harmony = new Harmony("com.vaniiaaa.nosavedelete");
             harmony.PatchAll();
-            logger.LogInfo("NoSaveDelete v1.0.8 loaded");
+            logger.LogInfo("NoSaveDelete v2.1.0 loaded");
         }
 
         [HarmonyPatch(typeof(DataDirector), "SaveDeleteCheck")]
@@ -22,8 +22,14 @@ namespace NoSaveDelete
         {
             static bool Prefix(bool _leaveGame)
             {
-                logger.LogInfo("SaveDeleteCheck blocked");
-                return false;
+                if (SemiFunc.RunIsArena())
+                {
+                    logger.LogInfo("SaveDeleteCheck blocked - Arena active");
+                    return false;
+                }
+                
+                logger.LogInfo("SaveDeleteCheck allowed - normal cleanup");
+                return true;
             }
         }
 
@@ -32,8 +38,14 @@ namespace NoSaveDelete
         {
             static bool Prefix(string saveFileName)
             {
-                logger.LogInfo("SaveFileDelete blocked");
-                return false;
+                if (SemiFunc.RunIsArena())
+                {
+                    logger.LogInfo($"SaveFileDelete blocked - Arena (file: {saveFileName})");
+                    return false;
+                }
+                
+                logger.LogInfo($"SaveFileDelete allowed (file: {saveFileName})");
+                return true;
             }
         }
 
@@ -42,8 +54,42 @@ namespace NoSaveDelete
         {
             static bool Prefix()
             {
-                logger.LogInfo("ResetProgress blocked - progress preserved");
-                return false;
+                if (SemiFunc.RunIsArena())
+                {
+                    logger.LogInfo("ResetProgress blocked - Arena active");
+                    return false;
+                }
+       
+                return true;
+            }
+        }
+        [HarmonyPatch(typeof(StatsManager), "SaveGame")]
+        public class StatsManagerSaveGamePatch
+        {
+            static bool Prefix(string fileName)
+            {
+                if (SemiFunc.RunIsArena())
+                {
+                    logger.LogInfo($"SaveGame blocked - Arena active (file: {fileName})");
+                    return false;
+                }
+                
+                return true;
+            }
+        }
+        
+        [HarmonyPatch(typeof(StatsManager), "SaveFileSave")]
+        public class StatsManagerSaveFileSavePatch
+        {
+            static bool Prefix()
+            {
+                if (SemiFunc.RunIsArena())
+                {
+                    logger.LogInfo("SaveFileSave blocked - Arena");
+                    return false;
+                }
+                
+                return true;
             }
         }
     }
