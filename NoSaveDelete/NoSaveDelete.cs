@@ -1,21 +1,74 @@
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using UnityEngine;
+using System.Reflection;
 
 namespace NoSaveDelete
 {
-    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "2.6.0")]
+    [BepInPlugin("com.vaniiaaa.nosavedelete", "NoSaveDelete", "2.0")]
     public class NoSaveDeletePlugin : BaseUnityPlugin
     {
         private static ManualLogSource logger;
         private static bool blockSaves = false;
+        private static bool needsReload = false;
+        private static float reloadTimer = 0f;
 
         private void Awake()
         {
             logger = Logger;
             var harmony = new Harmony("com.vaniiaaa.nosavedelete");
             harmony.PatchAll();
-            logger.LogInfo("NoSaveDelete v2.6.0 loaded");
+            logger.LogInfo("NoSaveDelete loaded");
+        }
+
+        private void Update()
+        {
+            if (needsReload)
+            {
+                bool isLevelGenerated = false;
+                var levelGenType = AccessTools.TypeByName("LevelGenerator");
+                
+                if (levelGenType != null)
+                {
+                    var instanceProp = AccessTools.Property(levelGenType, "Instance");
+                    var instance = instanceProp?.GetValue(null);
+                    
+                    if (instance != null)
+                    {
+                        var generatedField = AccessTools.Field(levelGenType, "Generated");
+                        if (generatedField != null)
+                        {
+                            isLevelGenerated = (bool)generatedField.GetValue(instance);
+                        }
+                    }
+                }
+
+                if (isLevelGenerated)
+                {
+                    reloadTimer += Time.deltaTime;
+                    
+                
+                    if (reloadTimer > 0.1f)
+                    {
+                        blockSaves = false;
+                        
+                        if (StatsManager.instance != null)
+                        {
+                            string currentSave = Traverse.Create(StatsManager.instance).Field("saveFileCurrent").GetValue<string>();
+                            
+                            if (!string.IsNullOrEmpty(currentSave))
+                            {
+                                logger.LogInfo($"Restoring save file: {currentSave}");
+                                StatsManager.instance.LoadGame(currentSave, null);
+                                
+                                needsReload = false;
+                                reloadTimer = 0f;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         [HarmonyPatch(typeof(RunManager), "ChangeLevel")]
@@ -23,15 +76,16 @@ namespace NoSaveDelete
         {
             static void Prefix(bool _completedLevel, bool _levelFailed, RunManager __instance)
             {
+
+                if (__instance.levelCurrent == __instance.levelLobbyMenu) return;
+
+
                 if (_levelFailed && __instance.levelCurrent != __instance.levelArena)
                 {
                     blockSaves = true;
-                    logger.LogInfo("Level failed - saves blocked");
-                }
-                else if (_completedLevel && !_levelFailed)
-                {
-                    blockSaves = false;
-                    logger.LogInfo("Level completed - saves unblocked");
+                    needsReload = true;
+                    reloadTimer = 0f;
+                    logger.LogInfo("Level failed. Saves blocked. Reload scheduled.");
                 }
             }
         }
@@ -41,12 +95,7 @@ namespace NoSaveDelete
         {
             static bool Prefix()
             {
-                if (SemiFunc.RunIsArena() || blockSaves)
-                {
-                    logger.LogInfo("SaveDeleteCheck blocked");
-                    return false;
-                }
-                return true;
+                return !(SemiFunc.RunIsArena() || blockSaves);
             }
         }
 
@@ -55,12 +104,7 @@ namespace NoSaveDelete
         {
             static bool Prefix(string saveFileName)
             {
-                if (SemiFunc.RunIsArena() || blockSaves)
-                {
-                    logger.LogInfo($"SaveFileDelete blocked (file: {saveFileName})");
-                    return false;
-                }
-                return true;
+                return !(SemiFunc.RunIsArena() || blockSaves);
             }
         }
 
@@ -69,12 +113,7 @@ namespace NoSaveDelete
         {
             static bool Prefix()
             {
-                if (SemiFunc.RunIsArena())
-                {
-                    logger.LogInfo("ResetProgress blocked - Arena active");
-                    return false;
-                }
-                return true;
+                return !SemiFunc.RunIsArena();
             }
         }
 
@@ -83,12 +122,7 @@ namespace NoSaveDelete
         {
             static bool Prefix(string fileName)
             {
-                if (SemiFunc.RunIsArena() || blockSaves)
-                {
-                    logger.LogInfo($"SaveGame blocked (file: {fileName})");
-                    return false;
-                }
-                return true;
+                return !(SemiFunc.RunIsArena() || blockSaves);
             }
         }
         
@@ -97,12 +131,7 @@ namespace NoSaveDelete
         {
             static bool Prefix()
             {
-                if (SemiFunc.RunIsArena() || blockSaves)
-                {
-                    logger.LogInfo("SaveFileSave blocked");
-                    return false;
-                }
-                return true;
+                return !(SemiFunc.RunIsArena() || blockSaves);
             }
         }
     }
