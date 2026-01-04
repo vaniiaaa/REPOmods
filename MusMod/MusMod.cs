@@ -26,7 +26,6 @@ namespace MusMod
             customMusicPath = Path.Combine(Paths.PluginPath, "MusMod", "menu_music.ogg");
             Logger.LogInfo($"Путь к музыке: {customMusicPath}");
             
-            // Загружаем звук сразу при старте плагина
             StartCoroutine(LoadCustomMusic());
             
             Harmony.CreateAndPatchAll(typeof(Plugin));
@@ -42,13 +41,11 @@ namespace MusMod
                 yield break;
             }
 
-            // Важно: заменяем обратные слеши на прямые
             string fileUrl = "file:///" + customMusicPath.Replace("\\", "/");
             Logger.LogInfo($"URL файла: {fileUrl}");
 
             using (UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(fileUrl, AudioType.OGGVORBIS))
             {
-                // Важно: отключаем стриминг для полной загрузки
                 DownloadHandlerAudioClip handler = (DownloadHandlerAudioClip)request.downloadHandler;
                 handler.streamAudio = false;
                 
@@ -64,7 +61,7 @@ namespace MusMod
                     if (cachedClip != null)
                     {
                         cachedClip.name = "custom main menu";
-                        Logger.LogInfo($"✓ Кастомная музыка загружена! Длина: {cachedClip.length:F2} сек");
+                        Logger.LogInfo($"Кастомная музыка загружена! Длина: {cachedClip.length:F2} сек");
                     }
                     else
                     {
@@ -78,13 +75,10 @@ namespace MusMod
                 }
             }
         }
-
-        // Патч: заменяем clip при назначении
         [HarmonyPatch(typeof(AudioSource), nameof(AudioSource.clip), MethodType.Setter)]
         [HarmonyPostfix]
         static void ReplaceAudioClip(AudioSource __instance)
         {
-            // Проверяем, что это музыка главного меню
             if (__instance.clip != null && __instance.clip.name == "msc main menu")
             {
                 Logger.LogInfo("Обнаружена музыка главного меню!");
@@ -94,7 +88,6 @@ namespace MusMod
                     Logger.LogInfo("Заменяем на кастомную музыку!");
                     __instance.clip = cachedClip;
                     
-                    // Если AudioSource уже играет, перезапускаем
                     if (__instance.isPlaying)
                     {
                         __instance.Stop();
@@ -105,7 +98,6 @@ namespace MusMod
                 {
                     Logger.LogWarning("Кастомный клип ещё не загружен, ждём...");
                     
-                    // Запускаем корутину ожидания через Instance
                     if (Instance != null)
                     {
                         Instance.StartCoroutine(WaitAndReplace(__instance));
@@ -114,13 +106,12 @@ namespace MusMod
             }
         }
 
-        // Ждём загрузки и заменяем клип
         static IEnumerator WaitAndReplace(AudioSource source)
         {
             Logger.LogInfo("Ожидаем загрузку кастомной музыки...");
             
             int attempts = 0;
-            while (cachedClip == null && attempts < 100) // 10 секунд максимум
+            while (cachedClip == null && attempts < 100)
             {
                 yield return new WaitForSeconds(0.1f);
                 attempts++;
@@ -128,14 +119,14 @@ namespace MusMod
 
             if (cachedClip != null && source != null)
             {
-                Logger.LogInfo("✓ Загрузка завершена, применяем музыку!");
+                Logger.LogInfo("Загрузка завершена, применяем музыку!");
                 source.Stop();
                 source.clip = cachedClip;
                 source.Play();
             }
             else
             {
-                Logger.LogError($"✗ Не удалось загрузить музыку за {attempts * 0.1f:F1} секунд");
+                Logger.LogError($"Не удалось загрузить музыку за {attempts * 0.1f:F1} секунд");
             }
         }
     }
